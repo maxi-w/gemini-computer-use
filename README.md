@@ -39,5 +39,6 @@ pdm run start
 - [ ] Improve prompt to prevent some unwanted behaviours.
 - [ ] Explore different grounding info formats (2d box vs point, order of coordinates, scaling).
 - [ ] Make the agent decide when it's done with the task.
+- [ ] Explore Multimodal Live API for screen input [Docs](https://ai.google.dev/gemini-api/docs/models/gemini-v2#live-api)
 
 **Note:** Feel free to open an issue to discuss improvements.
