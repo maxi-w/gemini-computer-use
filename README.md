@@ -25,10 +25,10 @@ export GOOGLE_API_KEY=YOUR_API_KEY
 
 ### Step 3
 
-Run your computer agent with:
+Run your computer agent with a goal:
 
 ```shell
-pdm run start
+pdm run start "search for cat images with google"
 ```
 
 ## Roadmap
