@@ -1,5 +1,6 @@
 import pyautogui
 import re
+import sys
 import time
 
 from google import genai
@@ -7,6 +8,11 @@ from .tools import ComputerTool
 
 
 def main():
+    assert len(sys.argv) > 1, "You need to provide an instruction for the agent with your start command."
+    goal = sys.argv[1]
+    print(goal)
+    time.sleep(1)
+
     client = genai.Client()
     computer = ComputerTool()
 
@@ -19,10 +25,11 @@ def main():
     You don't have an option to ask questions as the user can only provide one initial goal. Try to compelete with the most reasonable option in case not sure.
     If there already is an application opened that would help with the task use it instead of opening another one.
 
-    You can use a set of tools to complete the task:
+    You can use a set of tools to complete the task. Every message can contain only one such tool.
+    If you want to type and press enter you should first only type and than press enter later after you got feedback on the typing.
     <screenshot> Use this to ask for a screenshot.
     <click>ymin, xmin, ymax, xmax</click> Use this and provide a bounding box of the target element in [ymin, xmin, ymax, xmax] format. Coordinates are normalized between 0 and 1000.
-    <type>the text you want to type</type> Use this to provide a text you want to type on the keyboard.
+    <type>the text you want to type</type> Use this to provide a text you want to type on the keyboard. Only use it after you selected a textfield in which you can type.
     <key>a keyboard key</key> Use this to press a keyboard key.
 
     The follwoing are valid keyboard keys you could press:
@@ -48,8 +55,6 @@ def main():
     'shift', 'shiftleft', 'shiftright', 'sleep', 'space', 'stop', 'subtract', 'tab',
     'up', 'volumedown', 'volumemute', 'volumeup', 'win', 'winleft', 'winright', 'yen',
     'command', 'option', 'optionleft', 'optionright']
-
-    Only return one tool use instruction in each of your messages.
     """
 
     screen_width, screen_height = computer.take_screenshot().size
@@ -57,9 +62,6 @@ def main():
 
     print(screen_width, screen_height)
     print(click_width, click_height)
-
-    goal = pyautogui.prompt(text='What do you want the Computer Agent to do?', title='Define the Task' , default='')
-    assert goal is not None, "Goal was None"
     prompt += f"\nGoal: {goal}"
 
     messages = [prompt]
