@@ -3,10 +3,12 @@ import re
 import time
 
 from google import genai
+from .tools import ComputerTool
 
 
 def main():
     client = genai.Client()
+    computer = ComputerTool()
 
     #<spotlight>search</spotlight> Use this to use the MacOS Spotlight search for opening tools like browsers which is more reliable than clicking.
     #<spotlight>"name of the tool"</spotlight> Use this to use the MacOS Spotlight search for opening tools like browsers which is more reliable than clicking.
@@ -50,30 +52,7 @@ def main():
     Only return one tool use instruction in each of your messages.
     """
 
-    def take_screenshot():
-        img = pyautogui.screenshot()
-        return img
-
-    def click(x, y):
-        pyautogui.moveTo(x, y, 2)
-        pyautogui.click(button="left")
-
-    def open_spotlight(search: str):
-        pyautogui.keyDown("command")
-        pyautogui.press("space")
-        pyautogui.keyUp("command")
-        pyautogui.typewrite(search)
-        pyautogui.press("enter")
-
-    def typewrite(text: str):
-        pyautogui.typewrite(text)
-
-    def press_key(name: str):
-        pyautogui.press(name)
-
-    time.sleep(2)
-
-    screen_width, screen_height = take_screenshot().size
+    screen_width, screen_height = computer.take_screenshot().size
     click_width, click_height = pyautogui.size()
 
     print(screen_width, screen_height)
@@ -91,7 +70,7 @@ def main():
 
         if "<screenshot>" in response.text:
             print(response.text)
-            messages.append(take_screenshot())
+            messages.append(computer.take_screenshot())
             continue
 
         if "<click>" in response.text:
@@ -112,10 +91,10 @@ def main():
 
                 x = (xmin + xmax) // 2
                 y = (ymin + ymax) // 2
-                click(x, y)
+                computer.click(x, y)
                 messages.append(f"Successfully clicked {x}, {y}. The next Screenshot shows the state after the loading. Please verify whether the mouse hit the target element.")
                 time.sleep(1)
-                messages.append(take_screenshot())
+                messages.append(computer.take_screenshot())
                 continue
             else:
                 print(f"error when trying to parse click coordinates from {response.text}")
@@ -127,10 +106,10 @@ def main():
             match = re.search(pattern, response.text)
             result = match.group(1) if match else None
             if result is not None:
-                open_spotlight(result)
+                computer.open_spotlight(result)
                 messages.append(f"Opened {result} with spotlight.")
                 time.sleep(1)
-                messages.append(take_screenshot())
+                messages.append(computer.take_screenshot())
                 continue
             else:
                 print(f"error when using spotlight with {response.text}")
@@ -142,10 +121,10 @@ def main():
             match = re.search(pattern, response.text)
             result = match.group(1) if match else None
             if result is not None:
-                typewrite(result)
+                computer.typewrite(result)
                 messages.append(f"Typed {result} on the keyboard.")
                 time.sleep(0.5)
-                messages.append(take_screenshot())
+                messages.append(computer.take_screenshot())
                 continue
             else:
                 print(f"error when trying to type {response.text}")
@@ -157,10 +136,10 @@ def main():
             match = re.search(pattern, response.text)
             result = match.group(1) if match else None
             if result is not None:
-                press_key(result)
+                computer.press_key(result)
                 messages.append(f"Pressed {result} on the keyboard.")
                 time.sleep(1)
-                messages.append(take_screenshot())
+                messages.append(computer.take_screenshot())
                 continue
             else:
                 print(f"error when trying to press {response.text}")
