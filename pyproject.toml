@@ -8,8 +8,11 @@ authors = [
 dependencies = ["google-genai>=0.2.0", "pyautogui>=0.9.54"]
 requires-python = ">=3.10"
 readme = "README.md"
-license = {text = "MIT"}
+license = {text = "Apache-2.0"}
 
 
 [tool.pdm]
 distribution = false
+
+[tool.pdm.scripts]
+start = {call = "src.gemini_computer_use.main:main"}
