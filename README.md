@@ -31,3 +31,13 @@ Run your computer agent with:
 pdm run start
 ```
 
+## Roadmap
+
+- [x] Simple implementation of screenshot understanding and computer tool use.
+- [ ] Improve structure of actions e.g. with JSON mode.
+- [ ] Checkout tool use as in Gemini SDK [Docs](https://ai.google.dev/gemini-api/docs/models/gemini-v2#improved-tools).
+- [ ] Improve prompt to prevent some unwanted behaviours.
+- [ ] Explore different grounding info formats (2d box vs point, order of coordinates, scaling).
+- [ ] Make the agent decide when it's done with the task.
+
+**Note:** Feel free to open an issue to discuss improvements.
