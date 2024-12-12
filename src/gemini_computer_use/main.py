@@ -2,6 +2,7 @@ import pyautogui
 import re
 import sys
 import time
+import PIL.PngImagePlugin
 
 from google import genai
 from .tools import ComputerTool
@@ -32,6 +33,7 @@ def main():
     <type>the text you want to type</type> Use this to provide a text you want to type on the keyboard. Only use it after you selected a textfield in which you can type.
     <key>a keyboard key</key> Use this to press a keyboard key.
 
+    <hotkey>a hotkey</hotkey> Use this to press a hotkey.
     The follwoing are valid keyboard keys you could press:
     ['\t', '\n', '\r', ' ', '!', '"', '#', '$', '%', '&', "'", '(',
     ')', '*', '+', ',', '-', '.', '/', '0', '1', '2', '3', '4', '5', '6', '7',
@@ -55,6 +57,11 @@ def main():
     'shift', 'shiftleft', 'shiftright', 'sleep', 'space', 'stop', 'subtract', 'tab',
     'up', 'volumedown', 'volumemute', 'volumeup', 'win', 'winleft', 'winright', 'yen',
     'command', 'option', 'optionleft', 'optionright']
+
+    Use shortcuts whenever possible.
+    In windows, to open taskbar items you can press win+number (1-9) hotkey.
+    Add your reasoning also.
+    Send <finish> if the goal is completed.
     """
 
     screen_width, screen_height = computer.take_screenshot().size
@@ -65,19 +72,36 @@ def main():
     prompt += f"\nGoal: {goal}"
 
     messages = [prompt]
-    for i in range(5):
+    def is_goal_completed():
+        messages = [f"Goal: {goal}. Send <finish> if the goal is completed. Else explain why it is not completed."]
+        messages.append(computer.take_screenshot())
         response = client.models.generate_content(
             model='gemini-2.0-flash-exp', contents=messages
         )
+        response_text = response.text
+        if "finish" in response_text:
+            return True, "Goal is completed."
+        return False, response_text
 
-        if "<screenshot>" in response.text:
-            print(response.text)
+    last_response = None
+    for i in range(50):
+        print('Step', i+1)
+        response = client.models.generate_content(
+            model='gemini-2.0-flash-exp', contents=messages
+        )
+        response_text = response.text
+        if last_response == response_text:
+            # to avoid loops
+            response_text = '<finish>'
+        last_response = response_text
+        if "<screenshot>" in response_text:
+            print(response_text)
             messages.append(computer.take_screenshot())
             continue
 
-        if "<click>" in response.text:
-            print(response.text)
-            match = re.search(r'<click>(\d+),\s*(\d+),\s*(\d+),\s*(\d+)</click>', response.text)
+        if "<click>" in response_text:
+            print(response_text)
+            match = re.search(r'<click>(\d+),\s*(\d+),\s*(\d+),\s*(\d+)</click>', response_text)
             if match:
                 #xmin, ymin, xmax, ymax = map(int, match.groups())
                 ymin, xmin, ymax, xmax = map(int, match.groups())
@@ -99,13 +123,13 @@ def main():
                 messages.append(computer.take_screenshot())
                 continue
             else:
-                print(f"error when trying to parse click coordinates from {response.text}")
+                print(f"error when trying to parse click coordinates from {response_text}")
                 break
 
-        if "spotlight" in response.text:
-            print(response.text)
+        if "spotlight" in response_text:
+            print(response_text)
             pattern = r"<spotlight>(.*?)</spotlight>"
-            match = re.search(pattern, response.text)
+            match = re.search(pattern, response_text)
             result = match.group(1) if match else None
             if result is not None:
                 computer.open_spotlight(result)
@@ -114,13 +138,13 @@ def main():
                 messages.append(computer.take_screenshot())
                 continue
             else:
-                print(f"error when using spotlight with {response.text}")
+                print(f"error when using spotlight with {response_text}")
                 break
 
-        if "type" in response.text:
-            print(response.text)
+        if "type" in response_text:
+            print(response_text)
             pattern = r"<type>(.*?)</type>"
-            match = re.search(pattern, response.text)
+            match = re.search(pattern, response_text)
             result = match.group(1) if match else None
             if result is not None:
                 computer.typewrite(result)
@@ -129,13 +153,13 @@ def main():
                 messages.append(computer.take_screenshot())
                 continue
             else:
-                print(f"error when trying to type {response.text}")
+                print(f"error when trying to type {response_text}")
                 break
 
-        if "key" in response.text:
-            print(response.text)
+        if "<key>" in response_text:
+            print(response_text)
             pattern = r"<key>(.*?)</key>"
-            match = re.search(pattern, response.text)
+            match = re.search(pattern, response_text)
             result = match.group(1) if match else None
             if result is not None:
                 computer.press_key(result)
@@ -144,8 +168,26 @@ def main():
                 messages.append(computer.take_screenshot())
                 continue
             else:
-                print(f"error when trying to press {response.text}")
+                print(f"error when trying to press {response_text}")
                 break
+        
+        if "<hotkey>" in response_text:
+            print(response_text)
+            pattern = r"<hotkey>(.*?)</hotkey>"
+            match = re.search(pattern, response_text)
+            result = match.group(1) if match else None
+            if result is not None:
+                split_char = "+" if "+" in result else ","
+                computer.hotkey(*result.split(split_char))
+                messages.append(f"Pressed {result} on the keyboard.")
+                continue
 
-        print(response.text)
-        break
+        print(response_text)
+        if "<finish>" in response_text:
+            status, message = is_goal_completed()
+            if status:
+                print(message)
+                break
+            else:
+                messages.append(message)
+                continue

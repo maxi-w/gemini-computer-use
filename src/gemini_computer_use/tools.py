@@ -25,3 +25,7 @@ class ComputerTool:
 
     def press_key(self, name: str):
         pyautogui.press(name)
+
+    def hotkey(self, *keys):
+        pyautogui.hotkey(*keys)
+
