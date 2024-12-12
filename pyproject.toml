@@ -5,7 +5,7 @@ description = "Default template for PDM package"
 authors = [
     {name = "Maximilian Wessendorf", email = "maxi-git@outlook.de"},
 ]
-dependencies = []
+dependencies = ["google-genai>=0.2.0", "pyautogui>=0.9.54"]
 requires-python = ">=3.10"
 readme = "README.md"
 license = {text = "MIT"}
