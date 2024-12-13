@@ -2,7 +2,6 @@ import pyautogui
 import re
 import sys
 import time
-import PIL.PngImagePlugin
 
 from google import genai
 from .tools import ComputerTool
@@ -60,7 +59,7 @@ def main():
 
     Use shortcuts whenever possible.
     In windows, to open taskbar items you can press win+number (1-9) hotkey.
-    Add your reasoning also.
+    Add your reasoning at every step also.
     Send <finish> if the goal is completed.
     """
 
@@ -73,14 +72,14 @@ def main():
 
     messages = [prompt]
     def is_goal_completed():
-        messages = [f"Goal: {goal}. Send <finish> if the goal is completed. Else explain why it is not completed."]
+        messages = [f"Task: {goal}. Send <finished> with reasoning if the task is completed or <not_finished> if it is not completed."]
         messages.append(computer.take_screenshot())
         response = client.models.generate_content(
-            model='gemini-2.0-flash-exp', contents=messages
+            model='gemini-exp-1206', contents=messages
         )
         response_text = response.text
-        if "finish" in response_text:
-            return True, "Goal is completed."
+        if "<finished>" in response_text:
+            return True, response_text
         return False, response_text
 
     last_response = None
@@ -180,6 +179,7 @@ def main():
                 split_char = "+" if "+" in result else ","
                 computer.hotkey(*result.split(split_char))
                 messages.append(f"Pressed {result} on the keyboard.")
+                messages.append(computer.take_screenshot())
                 continue
 
         print(response_text)
@@ -191,3 +191,12 @@ def main():
             else:
                 messages.append(message)
                 continue
+
+    beep()
+
+def beep():
+    if sys.platform.system() == "Windows":
+        import winsound
+        winsound.Beep(500, 50)
+    else:
+        pass
